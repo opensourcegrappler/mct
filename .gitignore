@@ -1,4 +1,5 @@
+*~
 *.o
 *.png
 *.nmea
-prog
+mct

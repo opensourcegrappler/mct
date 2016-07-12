@@ -6,10 +6,7 @@ LNFLAGS = -lm -lcairo
 CC = gcc
 LD = gcc
 
-TARGET = prog
-
-# cairo:
-# 	gcc main.c -o prog $(CFLAGS) -lm 
+TARGET = mct
 
 all: $(TARGET) 
 
@@ -20,7 +17,7 @@ $(TARGET): $(OBJS)
 	@$(LD) -o $(TARGET) $(OBJS) $(LNFLAGS)
 
 clean:
-	rm prog \
+	rm mct \
 	*~ \
 	*.png \
 	*.o
