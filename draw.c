@@ -7,7 +7,8 @@
 
 int draw_roll_gauge(float degrees,int framecount)
 {
-
+    //the fps is only used calculating which frames
+    //to apply the sync light to, no other effect on output
     int fps = 1;
 
     cairo_surface_t *surface;
@@ -16,7 +17,7 @@ int draw_roll_gauge(float degrees,int framecount)
     surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,WIDTH,HEIGHT);
     cr = cairo_create(surface);
         
-    cairo_set_source_rgb(cr, 0.2, 0.2, 0.2);
+    cairo_set_source_rgb(cr, 1, 1, 1);
 
     int lw = 15;
     cairo_set_line_width(cr, lw);

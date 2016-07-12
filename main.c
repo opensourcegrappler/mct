@@ -117,45 +117,37 @@ int line_parser(char* lline)
 
 float roll_calc()
 {
-
+    //calc cross product to determin if turn is left or right
     float turn = cos(prevline.bearing*M_PI/180)*sin(linedata.bearing*M_PI/180)
         - sin(prevline.bearing*M_PI/180)*cos(linedata.bearing*M_PI/180);
 
-//    printf("turnb %f\n",turn);
-    
+    //right
     if (turn >= 0)
     {
         turn = 1;
     }
+    //left
     else
     {
         turn = -1;
     }
-//    printf("turna %f\n",turn);
-   
+    
     float yaw_rate = linedata.bearing - prevline.bearing;
     if (abs(yaw_rate) > 180)
     {
         yaw_rate = turn * (360 - abs(yaw_rate));
     }
-//    printf("yaw rate %f\n",yaw_rate);
 
     float period = 360/yaw_rate; //assumes 1Hz data
-//    printf("period %f\n",period);
     float ave_speed = (prevline.speed+linedata.speed)/2;
+
     if (ave_speed == 0)
     {
         return 0.0;
     }
     
-//    printf("ave speed %f\n",ave_speed);
     float radius = ave_speed * period/(2*M_PI);
-//    printf("radius %f\n",radius);
     float roll = atan(ave_speed*ave_speed/(radius*9.8))*180/M_PI;
-//    printf("roll %f\n",roll);
-
-    
-//    printf("%f %f %f\n",prevline.bearing,linedata.bearing,turn);
     return roll;
 }
 
@@ -196,7 +188,6 @@ int main(int argc, char *argv[])
                 {
                     roll = roll_calc();
                     draw_roll_gauge(roll,lc-2);
-//                    printf("%f %d main\n",roll,lc);
                 }
 
                 //increment the line counter for valid lines only
@@ -209,45 +200,6 @@ int main(int argc, char *argv[])
         
     }
     
-    //parse the gps log file write this in another file, no other file
-    //calc the roll at each data point and produce a png frame
-
-    //catmull rom interpolate the data?
-    
-
-    
-/*
-    turn = cos((fbearing[0])*pi/180)*sin(fbearing[1])*.pi/180)
-    - sin(fbearing[0]*pi/180)*cos((fbearing[1])*pi/180)
-
-    if (turn > 0)
-    {
-        turn = -1;
-    } //left
-    else
-    {
-        turn = 1;
-    }
- 
-    yaw_rate = bearing[1] - bearing[2];
-    if (yaw_rate > 180)
-    {
-        yaw_rate = 360 - yaw_rate;
-    }
-    period = turn * 360/yaw_rate;
-    ave_speed = (speed[0]+speed[1])/2;
-    radius = average_speed * period/2*pi;
-    roll = arctan(average_speed*average_speed/(radius*9.8))*180/pi;
-
-*/
-
-    int i;
-    int count = 0;
-    for(i=-90;i<91;i++)
-    {
-//        draw_roll_gauge(i,count);
-        count++;
-    }
     return 0;
 
 }
