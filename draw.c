@@ -8,6 +8,8 @@
 int draw_roll_gauge(float degrees,int framecount)
 {
 
+    int fps = 1;
+
     cairo_surface_t *surface;
     cairo_t *cr;
     
@@ -62,7 +64,13 @@ int draw_roll_gauge(float degrees,int framecount)
     sprintf(sdeg,"%02.0f",degrees);
     cairo_show_text(cr,sdeg);
     
-    
+    if ((framecount<fps) || ((2*fps <= framecount) && (framecount < 3*fps)))
+    {
+        cairo_set_source_rgb(cr,1,0,0);
+        cairo_arc(cr,WIDTH/8,HEIGHT/8,WIDTH/20,0,2*M_PI);
+        cairo_fill(cr);
+
+    }
     
     char fh[15];
 

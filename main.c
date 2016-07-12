@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
                 if (lc > 1)
                 {
                     roll = roll_calc();
-                    draw_roll_gauge(roll,lc);
+                    draw_roll_gauge(roll,lc-2);
 //                    printf("%f %d main\n",roll,lc);
                 }
 
