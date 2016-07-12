@@ -1,0 +1,4 @@
+*.o
+*.png
+*.nmea
+prog
