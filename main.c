@@ -43,8 +43,6 @@ int line_parser(char* lline)
             chk^=*c;
         }
         
-        
-        
         //found the start of a sentence
         if (*c == '$'){
             state = 1;
@@ -99,7 +97,7 @@ int line_parser(char* lline)
 
     //convert the calculated checksum to a string for comparison
     sprintf(schk,"%02X",chk);
-    
+
     if ((linedata.status == 'A') && (!strcmp(data_chk,schk)))
     {
         //for debug by printf only
@@ -131,14 +129,20 @@ float roll_calc()
     {
         turn = -1;
     }
+
+
+    float timed = linedata.time - prevline.time;
+    printf("cur%.2f prev%.2f diff%.2f\n",linedata.time,prevline.time,timed);
+
+    //use the time difference to set the yaw rate correctly
     
-    float yaw_rate = linedata.bearing - prevline.bearing;
+    float yaw_rate = (linedata.bearing - prevline.bearing);
     if (abs(yaw_rate) > 180)
     {
         yaw_rate = turn * (360 - abs(yaw_rate));
     }
 
-    float period = 360/yaw_rate; //assumes 1Hz data
+    float period = 360/(yaw_rate*5); //assumes 1Hz data
     float ave_speed = (prevline.speed+linedata.speed)/2;
 
     if (ave_speed == 0)
