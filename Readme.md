@@ -1,9 +1,9 @@
 # Motorcycle Lean Angle Video Overlay Generator
 
-This program takes an nmea data file produced by a GPS as
-input and generates PNG image frames that can be imported to a video
-editing program and overlaid on on-board footage from a helmet camera
-or similar.
+This program takes an nmea data file produced by a GPS or any log file
+with NMEA formatted data as input and generates PNG image frames that
+can be imported to a video editing program and overlaid on on-board
+footage from a helmet camera or similar.
 
 There are many smartphone apps available that will record GPS
 information in nmea format.
