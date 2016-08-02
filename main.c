@@ -4,6 +4,10 @@
 #include <math.h>
 #include "draw.h"
 
+//5Hz data
+#define datarate 5
+
+
 struct datastr {
     float time;
     char status;
@@ -132,20 +136,23 @@ float roll_calc()
 
 
     float timed = linedata.time - prevline.time;
-    printf("cur%.2f prev%.2f diff%.2f\n",linedata.time,prevline.time,timed);
+//    printf("cur%.2f prev%.2f diff%.2f\n",linedata.time,prevline.time,timed);
 
     //use the time difference to set the yaw rate correctly
     
-    float yaw_rate = (linedata.bearing - prevline.bearing);
-    if (abs(yaw_rate) > 180)
+    float yaw_rate = (linedata.bearing - prevline.bearing)*datarate; //5Hz data
+    if (abs(yaw_rate) > (180*datarate))
     {
-        yaw_rate = turn * (360 - abs(yaw_rate));
+        yaw_rate = turn * ((360*datarate) - abs(yaw_rate));
     }
 
-    float period = 360/(yaw_rate*5); //assumes 1Hz data
+    printf("%f\n",yaw_rate);
+
+    
+    float period = 360/(yaw_rate);
     float ave_speed = (prevline.speed+linedata.speed)/2;
 
-    if (ave_speed == 0)
+    if (ave_speed <1)
     {
         return 0.0;
     }
@@ -185,13 +192,17 @@ int main(int argc, char *argv[])
             //call the line parser
             line_retval = line_parser(line);
             
+
+            //what if there are a bunch of invalid points
+            // at the start of the log file since the
+            //light has started flashing anyway??
             if (!line_retval)
             {
                 //second valid line onward start calculating roll etc
                 if (lc > 1)
                 {
                     roll = roll_calc();
-                    draw_roll_gauge(roll,lc-2);
+                    draw_roll_gauge(roll,lc-2,linedata.speed,prevline.speed,linedata.bearing,prevline.bearing);
                 }
 
                 //increment the line counter for valid lines only

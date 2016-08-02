@@ -5,18 +5,27 @@
 #define WIDTH 200
 #define HEIGHT 200
 
-int draw_roll_gauge(float degrees,int framecount)
+
+
+
+int draw_roll_gauge(float degrees,
+                    int framecount,
+                    float speed,
+                    float pspeed,
+                    float bearing,
+                    float pbearing)
 {
+
     //the fps is only used calculating which frames
     //to apply the sync light to, no other effect on output
-    int fps = 1;
+    int fps = 5;
 
     cairo_surface_t *surface;
     cairo_t *cr;
     
     surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,WIDTH,HEIGHT);
     cr = cairo_create(surface);
-        
+
     cairo_set_source_rgb(cr, 1, 1, 1);
 
     int lw = 15;
@@ -75,7 +84,18 @@ int draw_roll_gauge(float degrees,int framecount)
     
     char fh[15];
 
-    printf("Frame: %d, Lean: %02.0f\n",framecount,degrees);
+    printf("Frame: %d, Lean: %02.0f, Speed: %f, PSpeed: %f, Bearing %f, PBearing: %f\n",framecount,
+           degrees,
+           speed,
+           pspeed,
+           bearing,
+           pbearing);
+
+
+
+
+
+
     sprintf(fh,"frame%06d.png",framecount);
     
     cairo_surface_write_to_png(surface,fh);
