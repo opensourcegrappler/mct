@@ -21,6 +21,19 @@ struct datastr linedata;
 struct datastr prevline;
 
 
+float calc_yaw(float currentbearing,float prevbearing,float turn)
+{
+    float yaw = (currentbearing - prevbearing); 
+    if (abs(yaw) > (180))
+    {
+        yaw = turn * ((360) - abs(yaw));
+    }
+
+    return yaw;
+
+}
+
+
 int line_parser(char* lline)
 {
 
@@ -140,16 +153,10 @@ float roll_calc()
 
     //use the time difference to set the yaw rate correctly
     
-    float yaw_rate = (linedata.bearing - prevline.bearing)*datarate; //5Hz data
-    if (abs(yaw_rate) > (180*datarate))
-    {
-        yaw_rate = turn * ((360*datarate) - abs(yaw_rate));
-    }
 
-    printf("%f\n",yaw_rate);
+    float yaw = calc_yaw(linedata.bearing,prevline.bearing,turn);
 
-    
-    float period = 360/(yaw_rate);
+    float period = 360/(yaw*datarate);
     float ave_speed = (prevline.speed+linedata.speed)/2;
 
     if (ave_speed <1)
@@ -159,6 +166,7 @@ float roll_calc()
     
     float radius = ave_speed * period/(2*M_PI);
     float roll = atan(ave_speed*ave_speed/(radius*9.8))*180/M_PI;
+
     return roll;
 }
 
