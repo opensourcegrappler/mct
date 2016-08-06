@@ -29,7 +29,7 @@ with most video editing packages. I use [OpenShot](www.openshot.org)
 
 ## Limitations aka todo's:
 
-   - GPS data is assumed to be recorded at 1Hz (1 location fix per
+   - GPS data is assumed to be recorded at 5Hz (5 location fixes per
      second)
    - A gauge representing lean angle is the only available output.
    - If the GPS signal is lost and picked up again the time elapsed
@@ -45,7 +45,7 @@ with most video editing packages. I use [OpenShot](www.openshot.org)
 ## Note about the calculation
 
 The calculation of lean angle is based only on speed and track bearing
-recorded by a GPS. Therefore the motorcycle must be in motion for any
-non-zero value of lean angle to be recorded. The position of the GPS
-recording device on the rider or the bike has a negligible effect on
-the resulting estimation of lean angle. 
+recorded by a GPS module. Therefore the motorcycle must be in motion
+for any non-zero value of lean angle to be recorded. The position of
+the GPS recording device on the rider or the bike has a negligible
+effect on the resulting estimation of lean angle.
