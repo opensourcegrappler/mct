@@ -183,7 +183,6 @@ int main(int argc, char *argv[])
     ssize_t read;
 
     int line_retval;
-    int lc=1;
 
     int count =0;
     double degrees = 0;
@@ -202,6 +201,9 @@ int main(int argc, char *argv[])
 
     rollstr R;
 
+    //lpf phase delay, 4 frames = N/2 from FIR filter
+    int lpf_delay;
+    
     float a0 = 0.227272727;
     float a1 = 0.1966520727;
     float a2 = 0.12272727272;
@@ -239,12 +241,17 @@ int main(int argc, char *argv[])
                     (a4*R.proll4);
                 
                 printf("%d %f %f\n",count,R.roll,degrees);
-                draw_roll_gauge(degrees,count);
-                count++;
-                
-                //increment the line counter for valid lines only
-                lc++;
 
+                //after the initial delay draw things
+                if (count > lpf_delay)
+                {
+                    draw_roll_gauge(degrees,count-lpf_delay);
+                }
+                
+                //increment the frame counter
+                count++;
+
+                //shuffle roll values along the buffer
                 R.proll4 = R.proll3;
                 R.proll3 = R.proll2;
                 R.proll2 = R.proll1;
@@ -253,15 +260,13 @@ int main(int argc, char *argv[])
                 R.roll1 = R.roll2;
                 R.roll2 = R.roll3;
                 R.roll3 = R.roll4;
-                
+
+                //for roll calc, todo remove these globals
                 P1 = P0;
             }
         }
-        
     }
-    
     return 0;
-
 }
 
 
