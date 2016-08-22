@@ -7,19 +7,20 @@
 //5Hz data
 #define datarate 5
 
-
-struct datastr {
+// define the struct type for holding inertial related data
+typedef struct datastr {
     float time;
     char status;
     float lat;
     float lon;
     float speed;
     float bearing;
-};
+    double roll;
+} inertial;
 
-struct datastr linedata;
-struct datastr prevline;
-
+// this is hacky, todo remove these globals
+inertial P0;
+inertial P1;
 
 float calc_yaw(float currentbearing,float prevbearing,float turn)
 {
@@ -87,22 +88,22 @@ int line_parser(char* lline)
 
             switch(wc){
             case 2:
-                linedata.time = atof(word);
+                P0.time = atof(word);
                 break;
             case 3:
-                linedata.status = word[0];
+                P0.status = word[0];
                 break;
             case 4:
-                linedata.lat = atof(word);
+                P0.lat = atof(word);
                 break;
             case 6:
-                linedata.lon = atof(word);
+                P0.lon = atof(word);
                 break;
             case 8:
-                linedata.speed = 0.5144*atof(word);
+                P0.speed = 0.5144*atof(word);
                 break;
             case 9:
-                linedata.bearing = atof(word);
+                P0.bearing = atof(word);
                 break;
             case 14:
                 strcpy(data_chk,word);
@@ -115,7 +116,7 @@ int line_parser(char* lline)
     //convert the calculated checksum to a string for comparison
     sprintf(schk,"%02X",chk);
 
-    if ((linedata.status == 'A') && (!strcmp(data_chk,schk)))
+    if ((!strcmp(data_chk,schk)))
     {
         //for debug by printf only
         //printf("$GPMCT %s %c %s %s %s %s\n",time,status,lat,lon,speed,bearing);
@@ -133,8 +134,8 @@ int line_parser(char* lline)
 float roll_calc()
 {
     //calc cross product to determin if turn is left or right
-    float turn = cos(prevline.bearing*M_PI/180)*sin(linedata.bearing*M_PI/180)
-        - sin(prevline.bearing*M_PI/180)*cos(linedata.bearing*M_PI/180);
+    float turn = cos(P1.bearing*M_PI/180)*sin(P0.bearing*M_PI/180)
+        - sin(P1.bearing*M_PI/180)*cos(P0.bearing*M_PI/180);
 
     //right
     if (turn >= 0)
@@ -147,17 +148,16 @@ float roll_calc()
         turn = -1;
     }
 
-
-    float timed = linedata.time - prevline.time;
-//    printf("cur%.2f prev%.2f diff%.2f\n",linedata.time,prevline.time,timed);
+    float timed = P0.time - P1.time;
+//    printf("cur%.2f prev%.2f diff%.2f\n",P0.time,P1.time,timed);
 
     //use the time difference to set the yaw rate correctly
     
 
-    float yaw = calc_yaw(linedata.bearing,prevline.bearing,turn);
+    float yaw = calc_yaw(P0.bearing,P1.bearing,turn);
 
     float period = 360/(yaw*datarate);
-    float ave_speed = (prevline.speed+linedata.speed)/2;
+    float ave_speed = (P1.speed+P0.speed)/2;
 
     if (ave_speed <1)
     {
@@ -185,7 +185,28 @@ int main(int argc, char *argv[])
     int line_retval;
     int lc=1;
 
-    float roll;
+    int count =0;
+    double degrees = 0;
+
+    typedef struct datastr {
+        double proll4;
+        double proll3;
+        double proll2;
+        double proll1;
+        double roll;
+        double roll1;
+        double roll2;
+        double roll3;
+        double roll4;
+    } rollstr;
+
+    rollstr R;
+
+    float a0 = 0.227272727;
+    float a1 = 0.1966520727;
+    float a2 = 0.12272727272;
+    float a3 = 0.0488024;
+    float a4 = 0.018181818;
     
     while((read = getline(&line, &len, fh)) != -1)
     {
@@ -200,24 +221,40 @@ int main(int argc, char *argv[])
             //call the line parser
             line_retval = line_parser(line);
             
-
-            //what if there are a bunch of invalid points
-            // at the start of the log file since the
-            //light has started flashing anyway??
             if (!line_retval)
             {
-                //second valid line onward start calculating roll etc
-                if (lc > 1)
-                {
-                    roll = roll_calc();
-                    draw_roll_gauge(roll,lc-2,linedata.speed,prevline.speed,linedata.bearing,prevline.bearing);
-                }
+                P0.roll = roll_calc();
 
+                R.roll4 = P0.roll;
+
+                //do filtering here
+                degrees = (a0*R.roll) +
+                    (a1*R.roll1)  +
+                    (a1*R.proll1) +
+                    (a2*R.roll2)  +
+                    (a2*R.proll2) +
+                    (a3*R.roll3)  +
+                    (a3*R.proll3) +
+                    (a4*R.roll4)  +
+                    (a4*R.proll4);
+                
+                printf("%d %f %f\n",count,R.roll,degrees);
+                draw_roll_gauge(degrees,count);
+                count++;
+                
                 //increment the line counter for valid lines only
                 lc++;
-                prevline = linedata;
 
+                R.proll4 = R.proll3;
+                R.proll3 = R.proll2;
+                R.proll2 = R.proll1;
+                R.proll1 = R.roll;
+                R.roll = R.roll1;
+                R.roll1 = R.roll2;
+                R.roll2 = R.roll3;
+                R.roll3 = R.roll4;
                 
+                P1 = P0;
             }
         }
         
