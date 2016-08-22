@@ -8,6 +8,8 @@ footage from a helmet camera or similar.
 There are many smartphone apps available that will record GPS
 information in nmea format.
 
+![Screenshot](screenshots/demo.png?raw=true)
+
 ## Building
 
 ### Dependencies
