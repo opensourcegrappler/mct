@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
     rollstr R;
 
     //lpf phase delay, 4 frames = N/2 from FIR filter
-    int lpf_delay;
+    int lpf_delay = 4;
     
     float a0 = 0.227272727;
     float a1 = 0.1966520727;
