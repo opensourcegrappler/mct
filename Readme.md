@@ -40,7 +40,6 @@ with most video editing packages. I use [OpenShot](www.openshot.org)
      some very interesting results but will only last for one
      data point (frame).
    - Overlay graphics are white in colour.
-   - Frame size of output is 200x200 pixels.
    - A red synchronisation light will flash twice at the start of the
      video. This is for use with some hardware I am building.
 
