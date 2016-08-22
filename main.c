@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
                 //after the initial delay draw things
                 if (count > lpf_delay)
                 {
-                    draw_roll_gauge(degrees,count-lpf_delay);
+                    draw_roll_gauge(degrees,count-lpf_delay-1);
                 }
                 
                 //increment the frame counter
