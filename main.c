@@ -18,9 +18,6 @@ typedef struct datastr {
     double roll;
 } inertial;
 
-// this is hacky, todo remove these globals
-inertial P0;
-inertial P1;
 
 float calc_yaw(float currentbearing,float prevbearing,float turn)
 {
@@ -31,11 +28,10 @@ float calc_yaw(float currentbearing,float prevbearing,float turn)
     }
 
     return yaw;
-
 }
 
 
-int line_parser(char* lline)
+int line_parser(char* lline,inertial *current)
 {
 
     char* c = lline;
@@ -88,22 +84,22 @@ int line_parser(char* lline)
 
             switch(wc){
             case 2:
-                P0.time = atof(word);
+                current->time = atof(word);
                 break;
             case 3:
-                P0.status = word[0];
+                current->status = word[0];
                 break;
             case 4:
-                P0.lat = atof(word);
+                current->lat = atof(word);
                 break;
             case 6:
-                P0.lon = atof(word);
+                current->lon = atof(word);
                 break;
             case 8:
-                P0.speed = 0.5144*atof(word);
+                current->speed = 0.5144*atof(word);
                 break;
             case 9:
-                P0.bearing = atof(word);
+                current->bearing = atof(word);
                 break;
             case 14:
                 strcpy(data_chk,word);
@@ -116,26 +112,24 @@ int line_parser(char* lline)
     //convert the calculated checksum to a string for comparison
     sprintf(schk,"%02X",chk);
 
-    if ((!strcmp(data_chk,schk)))
-    {
-        //for debug by printf only
-        //printf("$GPMCT %s %c %s %s %s %s\n",time,status,lat,lon,speed,bearing);
-        return 0;
-    }
-    else
-    {
-        //printf("Invalid\n");
-        //printf("Log: %s, Calculated: %s\n",data_chk,schk);
-        return 1;
-    }
+    if ((!strcmp(data_chk,schk))) return 0;
+    else return 1;
 
 }
 
-float roll_calc()
+float roll_calc(inertial *current,inertial *prev)
 {
+
+    float cur_bearing,prev_bearing,cur_speed,prev_speed;
+
+    cur_bearing = current->bearing;
+    prev_bearing = prev->bearing;
+    cur_speed = current->speed;
+    prev_speed = prev->speed;
+
     //calc cross product to determin if turn is left or right
-    float turn = cos(P1.bearing*M_PI/180)*sin(P0.bearing*M_PI/180)
-        - sin(P1.bearing*M_PI/180)*cos(P0.bearing*M_PI/180);
+    float turn = cos(prev_bearing*M_PI/180)*sin(cur_bearing*M_PI/180)
+        - sin(prev_bearing*M_PI/180)*cos(cur_bearing*M_PI/180);
 
     //right
     if (turn >= 0)
@@ -148,16 +142,10 @@ float roll_calc()
         turn = -1;
     }
 
-    float timed = P0.time - P1.time;
-//    printf("cur%.2f prev%.2f diff%.2f\n",P0.time,P1.time,timed);
-
-    //use the time difference to set the yaw rate correctly
-    
-
-    float yaw = calc_yaw(P0.bearing,P1.bearing,turn);
+    float yaw = calc_yaw(cur_bearing,prev_bearing,turn);
 
     float period = 360/(yaw*datarate);
-    float ave_speed = (P1.speed+P0.speed)/2;
+    float ave_speed = (prev_speed+cur_speed)/2;
 
     if (ave_speed <1)
     {
@@ -209,6 +197,11 @@ int main(int argc, char *argv[])
     float a2 = 0.12272727272;
     float a3 = 0.0488024;
     float a4 = 0.018181818;
+
+    //the current and previous datapoints
+    inertial current_t;
+    inertial previous_t;
+
     
     while((read = getline(&line, &len, fh)) != -1)
     {
@@ -221,13 +214,13 @@ int main(int argc, char *argv[])
             (line[5] == 'C'))
         {
             //call the line parser
-            line_retval = line_parser(line);
+            line_retval = line_parser(line,&current_t);
             
             if (!line_retval)
             {
-                P0.roll = roll_calc();
-
-                R.roll4 = P0.roll;
+                current_t.roll = roll_calc(&current_t,&previous_t);
+                               
+                R.roll4 = current_t.roll;
 
                 //do filtering here
                 degrees = (a0*R.roll) +
@@ -261,8 +254,8 @@ int main(int argc, char *argv[])
                 R.roll2 = R.roll3;
                 R.roll3 = R.roll4;
 
-                //for roll calc, todo remove these globals
-                P1 = P0;
+                //the current datapoint becomes the previous datapoint
+                previous_t = current_t;
             }
         }
     }
