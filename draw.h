@@ -1,1 +1,1 @@
-int draw_roll_gauge(double degrees,int framecount);
+int draw_roll_gauge(double degrees,int framecount,int datarate);

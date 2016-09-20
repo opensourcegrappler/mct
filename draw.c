@@ -71,12 +71,13 @@ void draw_bike(cairo_t *cr,float degrees,float alpha,int dial_center)
 
 
 int draw_roll_gauge(double degrees,
-                    int framecount)
+                    int framecount,
+                    int datarate)
 {
 
     //the fps is only used calculating which frames
     //to apply the sync light to, no other effect on output
-    int fps = 5;
+    int fps = datarate;
 
     cairo_surface_t *surface;
     cairo_t *cr;

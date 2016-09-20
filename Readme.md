@@ -22,7 +22,15 @@ do.
 
 ## Use
 
-`./mct mylog.nmea`
+`./mct mylog.nmea datarate`
+
+Where mylog.nmea is the log file with NMEA data, and 'datarate' is the
+rate of the GPS. If no datarate is specified, a default value of 5Hz
+is used.
+
+E.g.
+
+`./mct LOG1.log 5`
 
 PNG images (video frames) will be generated in the current directory.
 
@@ -31,8 +39,6 @@ with most video editing packages. I use [OpenShot](www.openshot.org)
 
 ## Limitations aka todo's:
 
-   - GPS data is assumed to be recorded at 5Hz (5 location fixes per
-     second)
    - A gauge representing lean angle is the only available output.
    - If the GPS signal is lost and picked up again the time elapsed
      between the last good location fix and the time when the next

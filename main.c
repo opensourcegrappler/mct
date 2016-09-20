@@ -4,9 +4,6 @@
 #include <math.h>
 #include "draw.h"
 
-//5Hz data
-#define datarate 5
-
 // define the struct type for holding inertial related data
 typedef struct datastr {
     float time;
@@ -117,7 +114,7 @@ int line_parser(char* lline,inertial *current)
 
 }
 
-float roll_calc(inertial *current,inertial *prev)
+float roll_calc(inertial *current,inertial *prev, int datarate)
 {
 
     float cur_bearing,prev_bearing,cur_speed,prev_speed;
@@ -166,6 +163,11 @@ int main(int argc, char *argv[])
 
     fh = fopen(argv[1],"r");
 
+    int datarate;
+    
+    if (argv[2]) datarate = atoi(argv[2]);
+    else datarate = 5;
+   
     char * line = NULL;
     size_t len = 0;
     ssize_t read;
@@ -218,7 +220,7 @@ int main(int argc, char *argv[])
             
             if (!line_retval)
             {
-                current_t.roll = roll_calc(&current_t,&previous_t);
+                current_t.roll = roll_calc(&current_t,&previous_t,datarate);
                                
                 R.roll4 = current_t.roll;
 
@@ -238,7 +240,7 @@ int main(int argc, char *argv[])
                 //after the initial delay draw things
                 if (count > lpf_delay)
                 {
-                    draw_roll_gauge(degrees,count-lpf_delay-1);
+                    draw_roll_gauge(degrees,count-lpf_delay-1,datarate);
                 }
                 
                 //increment the frame counter
