@@ -42,9 +42,8 @@ with most video editing packages. I use [OpenShot](www.openshot.org)
    - A gauge representing lean angle is the only available output.
    - If the GPS signal is lost and picked up again the time elapsed
      between the last good location fix and the time when the next
-     good fix is achieved is assumed to be 1 second! This will give
-     some very interesting results but will only last for one
-     data point (frame).
+     good fix is achieved is assumed to be the size of the timestep
+     between GPS location fixes (5Hz = 0.2 secs).
    - Overlay graphics are white in colour.
    - A red synchronisation light will flash twice at the start of the
      video. This is for use with some hardware I am building.
