@@ -2,7 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "draw.h"
+
 
 // define the struct type for holding inertial related data
 typedef struct datastr {
@@ -49,7 +51,7 @@ int line_parser(char* lline,inertial *current)
             checkdone = 1;
         }
 
-        if ((checkdone == 0) && (*c != '$'))
+        if ((checkdone == 0) && (state==1))
         {
             chk^=*c;
         }
@@ -60,12 +62,20 @@ int line_parser(char* lline,inertial *current)
         }
 
         //append a valid character to the current word
-        if ((state==1) && (*c != ',') && (*c != '\n') && (*c!='*') && (*c!='\r'))
+        if ((state==1)   &&
+            (*c != ',' ) &&
+            (*c != '\n') &&
+            (*c != '*' ) &&
+            (*c != '\r'))
         {
             word[wl] = *c;
             wl++;
         }
-        else
+        else if ((state==1) &&
+                 (*c == ',' ) ||
+                 (*c == '\n') ||
+                 (*c == '*' ) ||
+                 (*c == '\r'))
         {
             state = 2;
         }
@@ -79,7 +89,15 @@ int line_parser(char* lline,inertial *current)
             wl = 0;
             wc++;
 
+            //assign fields
             switch(wc){
+            case 1:
+                if (strcmp(word,"$GPRMC"))
+                {
+                    state = 0;
+                    return 1;
+                }
+                break;
             case 2:
                 current->time = atof(word);
                 break;
@@ -100,6 +118,7 @@ int line_parser(char* lline,inertial *current)
                 break;
             case 14:
                 strcpy(data_chk,word);
+                state = 0;
             }
             state = 1;
         }
@@ -108,7 +127,6 @@ int line_parser(char* lline,inertial *current)
 
     //convert the calculated checksum to a string for comparison
     sprintf(schk,"%02X",chk);
-
     if ((!strcmp(data_chk,schk))) return 0;
     else return 1;
 
@@ -117,13 +135,25 @@ int line_parser(char* lline,inertial *current)
 float roll_calc(inertial *current,inertial *prev, int datarate)
 {
 
-    float cur_bearing,prev_bearing,cur_speed,prev_speed;
+    float cur_bearing,prev_bearing,cur_speed,prev_speed,prev_roll;
+    int cur_time,prev_time;
 
     cur_bearing = current->bearing;
     prev_bearing = prev->bearing;
     cur_speed = current->speed;
     prev_speed = prev->speed;
+    prev_time = 10*(prev->time);
+    cur_time = 10*(current->time);
 
+    int td = cur_time-prev_time;
+
+    //check time diff between datapoints is as expected 
+    if (td!=(10/datarate))
+    {
+        //return previous value of roll if not
+        return prev->roll; 
+    }
+    
     //calc cross product to determin if turn is left or right
     float turn = cos(prev_bearing*M_PI/180)*sin(cur_bearing*M_PI/180)
         - sin(prev_bearing*M_PI/180)*cos(cur_bearing*M_PI/180);
@@ -207,58 +237,49 @@ int main(int argc, char *argv[])
     
     while((read = getline(&line, &len, fh)) != -1)
     {
-
-        if ((line[0] == '$') &&
-            (line[1] == 'G') &&
-            (line[2] == 'P') &&
-            (line[3] == 'R') &&
-            (line[4] == 'M') &&
-            (line[5] == 'C'))
+        //call the line parser
+        line_retval = line_parser(line,&current_t);
+        
+        if (!line_retval)
         {
-            //call the line parser
-            line_retval = line_parser(line,&current_t);
+            current_t.roll = roll_calc(&current_t,&previous_t,datarate);
             
-            if (!line_retval)
+            R.roll4 = current_t.roll;
+
+            //do filtering here
+            degrees = (a0*R.roll) +
+                (a1*R.roll1)  +
+                (a1*R.proll1) +
+                (a2*R.roll2)  +
+                (a2*R.proll2) +
+                (a3*R.roll3)  +
+                (a3*R.proll3) +
+                (a4*R.roll4)  +
+                (a4*R.proll4);
+                
+            printf("%d %f %f %f\n",count,current_t.roll,previous_t.roll,degrees);
+
+            //after the initial delay draw things
+            if (count > lpf_delay)
             {
-                current_t.roll = roll_calc(&current_t,&previous_t,datarate);
-                               
-                R.roll4 = current_t.roll;
-
-                //do filtering here
-                degrees = (a0*R.roll) +
-                    (a1*R.roll1)  +
-                    (a1*R.proll1) +
-                    (a2*R.roll2)  +
-                    (a2*R.proll2) +
-                    (a3*R.roll3)  +
-                    (a3*R.proll3) +
-                    (a4*R.roll4)  +
-                    (a4*R.proll4);
-                
-                printf("%d %f %f\n",count,R.roll,degrees);
-
-                //after the initial delay draw things
-                if (count > lpf_delay)
-                {
-                    draw_roll_gauge(degrees,count-lpf_delay-1,datarate);
-                }
-                
-                //increment the frame counter
-                count++;
-
-                //shuffle roll values along the buffer
-                R.proll4 = R.proll3;
-                R.proll3 = R.proll2;
-                R.proll2 = R.proll1;
-                R.proll1 = R.roll;
-                R.roll = R.roll1;
-                R.roll1 = R.roll2;
-                R.roll2 = R.roll3;
-                R.roll3 = R.roll4;
-
-                //the current datapoint becomes the previous datapoint
-                previous_t = current_t;
+                draw_roll_gauge(degrees,count-lpf_delay-1,datarate);
             }
+            
+            //increment the frame counter
+            count++;
+            
+            //shuffle roll values along the buffer
+            R.proll4 = R.proll3;
+            R.proll3 = R.proll2;
+            R.proll2 = R.proll1;
+            R.proll1 = R.roll;
+            R.roll = R.roll1;
+            R.roll1 = R.roll2;
+            R.roll2 = R.roll3;
+            R.roll3 = R.roll4;
+            
+            //the current datapoint becomes the previous datapoint
+            previous_t = current_t;
         }
     }
     return 0;
